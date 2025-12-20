@@ -47,14 +47,10 @@ function createGauge(canvasId, label, maxValue) {
 		type: 'doughnut',
 		data: {
 			datasets: [{
-				data: [0, 80, 10, 5, 5, maxValue], // Green(80), Gray(10), Orange(5), Red(5), Available
+				data: [0, maxValue], // [used_memory, available_memory]
 				backgroundColor: [
-					'#4CAF50', // Bright saturated green - Primary healthy range
-					'#424242', // Dark gray - Warning range  
-					'#FF9800', // Bright orange - Critical range
-					'#F44336', // Vivid red - Maximum danger range
-					'#333333', // Dark gray background - Available space
-					'#333333'  // Dark gray background - Available space (duplicate for chart logic)
+					'#4CAF50', // Color will be updated based on usage level
+					'#333333'  // Gray for available memory
 				],
 				borderWidth: 0,
 				circumference: 180,
@@ -123,36 +119,28 @@ function updateGauge(chart, value, maxValue) {
 	const orangeMax = 95;   // 90-95% orange (critical)
 	const redMax = 100;     // 95-100% red (maximum danger)
 
-	// Initialize segments array
-	// [0=green healthy, 1=warning, 2=critical, 3=danger, 4=available memory]
-	const segments = [0, 0, 0, 0, 0]; 
-	
-	if (usagePercent <= greenMax) {
-		// All usage is in green segment (0-80%)
-		segments[0] = usagePercent;
-		segments[4] = 100 - usagePercent; // Available memory
-	} else if (usagePercent <= grayMax) {
-		// Usage spans green (0-80%) and warning segments (80-90%)
-		segments[0] = greenMax;
-		segments[1] = usagePercent - greenMax;
-		segments[4] = 100 - usagePercent; // Available memory
-	} else if (usagePercent <= orangeMax) {
-		// Usage spans green, warning (80-90%), and critical segments (90-95%)
-		segments[0] = greenMax;
-		segments[1] = grayMax - greenMax;
-		segments[2] = usagePercent - grayMax;
-		segments[4] = 100 - usagePercent; // Available memory
-	} else {
-		// Usage spans all segments including danger (95-100%)
-		segments[0] = greenMax;
-		segments[1] = grayMax - greenMax;
-		segments[2] = orangeMax - grayMax;
-		segments[3] = usagePercent - orangeMax;
-		segments[4] = 100 - usagePercent; // Available memory
-	}
+	// No need for segments array - using simple percentage-based logic
 
-	// Update chart data
-	chart.data.datasets[0].data = [...segments, maxValue];
+	// Update chart data - show ALL used memory as one segment
+	const usedMemory = usagePercent; // Used memory as percentage
+	const availableMemory = 100 - usagePercent; // Available memory as percentage
+	
+	// Chart shows [used_percentage, available_percentage] 
+	chart.data.datasets[0].data = [usedMemory, availableMemory];
+	
+	// Set color for used memory segment based on usage level
+	let usedMemoryColor;
+	if (usagePercent <= greenMax) {
+		usedMemoryColor = '#4CAF50'; // Green - healthy range
+	} else if (usagePercent <= grayMax) {
+		usedMemoryColor = '#424242'; // Dark gray - warning range  
+	} else if (usagePercent <= orangeMax) {
+		usedMemoryColor = '#FF9800'; // Orange - critical range
+	} else {
+		usedMemoryColor = '#F44336'; // Red - maximum danger range
+	}
+	
+	chart.data.datasets[0].backgroundColor = [usedMemoryColor, '#333333'];
 	
 	// Update labels
 	chart.options.plugins.annotation.annotations.usedLabel.content = `${value.toFixed(1)}GB`;
