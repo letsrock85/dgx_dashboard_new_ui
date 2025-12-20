@@ -296,16 +296,24 @@ function updateGauge(chart, value, maxValue) {
     // Chart shows [used_percentage, available_percentage] 
     chart.data.datasets[0].data = [usedMemory, availableMemory];
     
-    // Set color for used memory segment based on usage level
+    // Set color for used memory segment with gradient based on usage level
     let usedMemoryColor;
     if (usagePercent <= greenMax) {
-        usedMemoryColor = '#4CAF50'; // Green - healthy range
+        // Green to light green gradient in healthy range
+        const greenIntensity = Math.min(usagePercent / greenMax, 1);
+        const r = Math.round(76 + (255 - 76) * (1 - greenIntensity)); // 76->255
+        const g = Math.round(175 + (255 - 175) * greenIntensity); // 175->255  
+        const b = Math.round(80 + (255 - 80) * greenIntensity); // 80->255
+        usedMemoryColor = `rgb(${r}, ${g}, ${b})`;
     } else if (usagePercent <= grayMax) {
-        usedMemoryColor = '#424242'; // Dark gray - warning range  
+        // Orange for warning range
+        usedMemoryColor = '#FFA726'; 
     } else if (usagePercent <= orangeMax) {
-        usedMemoryColor = '#FF9800'; // Orange - critical range
+        // Orange-red for critical range
+        usedMemoryColor = '#FF9800'; 
     } else {
-        usedMemoryColor = '#F44336'; // Red - maximum danger range
+        // Red for danger range
+        usedMemoryColor = '#F44336'; 
     }
     
     chart.data.datasets[0].backgroundColor = [usedMemoryColor, '#333333'];

@@ -128,16 +128,24 @@ function updateGauge(chart, value, maxValue) {
 	// Chart shows [used_percentage, available_percentage] 
 	chart.data.datasets[0].data = [usedMemory, availableMemory];
 	
-	// Set color for used memory segment based on usage level
+	// Set color for used memory segment with gradient based on usage level
 	let usedMemoryColor;
 	if (usagePercent <= greenMax) {
-		usedMemoryColor = '#4CAF50'; // Green - healthy range
+		// Green to light green gradient in healthy range
+		const greenIntensity = Math.min(usagePercent / greenMax, 1);
+		const r = Math.round(76 + (255 - 76) * (1 - greenIntensity)); // 76->255
+		const g = Math.round(175 + (255 - 175) * greenIntensity); // 175->255  
+		const b = Math.round(80 + (255 - 80) * greenIntensity); // 80->255
+		usedMemoryColor = `rgb(${r}, ${g}, ${b})`;
 	} else if (usagePercent <= grayMax) {
-		usedMemoryColor = '#424242'; // Dark gray - warning range  
+		// Orange for warning range
+		usedMemoryColor = '#FFA726'; 
 	} else if (usagePercent <= orangeMax) {
-		usedMemoryColor = '#FF9800'; // Orange - critical range
+		// Orange-red for critical range
+		usedMemoryColor = '#FF9800'; 
 	} else {
-		usedMemoryColor = '#F44336'; // Red - maximum danger range
+		// Red for danger range
+		usedMemoryColor = '#F44336'; 
 	}
 	
 	chart.data.datasets[0].backgroundColor = [usedMemoryColor, '#333333'];
@@ -284,20 +292,24 @@ function initCharts() {
 				tension: 0.4,
 				segment: {
 					borderColor: ctx => {
-						// Get the max value from the y-axis scale
+						// Get the max value from the y-axis scale (usually 128GB)
 						const maxValue = ctx.chart.options.scales.y.max;
-						const yellowThreshold = maxValue * 0.6;
-						const redThreshold = maxValue * 0.8;
-
-						// Get the value at the end of this segment
 						const value = ctx.p1.parsed.y;
+						const usagePercent = (value / maxValue) * 100;
 
-						if (value >= redThreshold) {
-							return 'rgb(244, 67, 54)'; // #F44336 - Red
-						} else if (value >= yellowThreshold) {
-							return 'rgb(255, 193, 7)'; // Yellow
-						} else {
+						// Use same thresholds as main gauge
+						const greenMax = 80;
+						const grayMax = 90;
+						const orangeMax = 95;
+
+						if (usagePercent <= greenMax) {
 							return 'rgb(76, 175, 80)'; // #4CAF50 - Green
+						} else if (usagePercent <= grayMax) {
+							return 'rgb(255, 167, 38)'; // #FFA726 - Orange warning
+						} else if (usagePercent <= orangeMax) {
+							return 'rgb(255, 152, 0)'; // #FF9800 - Orange critical
+						} else {
+							return 'rgb(244, 67, 54)'; // #F44336 - Red danger
 						}
 					}
 				}
