@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGX Dashboard Demo</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="main.css">
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1A1A1A;
+            --bg-card: #1E1E1E;
+            --bg-card-hover: #222222;
+            --text-primary: #FFFFFF;
+            --text-secondary: #CCCCCC;
+            --text-accent: #00BFA5;
+            --gauge-green: #4CAF50;
+            --gauge-red: #F44336;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" 
+            integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" 
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js" 
+            integrity="sha384-3N9GHhCtN3CQef6tNfqgZlv7sQLYIkcChN+uaTZ7xVdzKYp/SjBNPxa92+hM7EAY" 
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div class="page">
+    <div id="header">
+        <h1><span id="hostname">DGX-SPARK-DEMO-01</span></h1>
+        <span id="status" style="color: #4ec9b0;">Connected</span>
+    </div>
+    
+    <div class="graphs">
+        <div class="group half">
+            <h3>Memory Usage</h3>
+            <div class="chart-container small"><canvas id="memory-gauge"></canvas></div>
+        </div>
+        <div class="group half">
+            <h3>Memory History</h3>
+            <div class="chart-container"><canvas id="memory-chart"></canvas></div>
+        </div>
+        <div class="group half">
+            <h3>GPU & CPU Usage</h3>
+            <div class="chart-container"><canvas id="usage-chart"></canvas></div>
+            <div id="gpu-power-label" class="power-label">GPU Power: 250 W</div>
+        </div>
+        <div class="group half">
+            <h3>Temperatures</h3>
+            <div class="chart-container"><canvas id="temp-chart"></canvas></div>
+        </div>
+        <div class="group full" id="docker-section">
+            <h3>Docker Containers</h3>
+            <table class="docker-table">
+                <thead>
+                    <tr>
+                        <th width="1"></th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>CPU</th>
+                        <th>Memory</th>
+                        <th>Ports</th>
+                    </tr>
+                </thead>
+                <tbody id="docker-table-body">
+                    <tr>
+                        <td class="actions">
+                            <button class="restart-btn" style="color: #FFA726;">Restart</button>
+                        </td>
+                        <td>
+                            <span class="name">dashboard</span>
+                            <span class="image detail">ghcr.io/dantup/dgx_dashboard:latest</span>
+                        </td>
+                        <td><span class="status-badge status-running">Running</span> <span class="status detail">Up 4 hours</span></td>
+                        <td class="cpu mono">0.05%</td>
+                        <td class="memory mono">38.73MiB / 119.6GiB</td>
+                        <td class="ports mono">0.0.0.0:8080->8080/tcp, :::8080->8080/tcp</td>
+                    </tr>
+                    <tr>
+                        <td class="actions">
+                            <button class="stop-btn" style="color: var(--gauge-red);">Stop</button>
+                        </td>
+                        <td>
+                            <span class="name">vllm_node</span>
+                            <span class="image detail">vllm-node-new</span>
+                        </td>
+                        <td><span class="status-badge status-running">Running</span> <span class="status detail">Up 20 hours</span></td>
+                        <td class="cpu mono">204.51%</td>
+                        <td class="memory mono">6.641GiB / 119.6GiB</td>
+                        <td class="ports mono">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+        <style>
+.docker-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.docker-table th,
+.docker-table td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #333333;
+}
+
+.docker-table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.docker-table tr:hover {
+    background-color: var(--bg-card-hover);
+}
+
+.docker-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mono {
+    font-family: monospace;
+    color: var(--text-secondary);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--gauge-green);
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.status-running {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: var(--gauge-green);
+}
+
+.status-stopped {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: var(--gauge-red);
+    border-color: var(--gauge-red);
+}
+
+.name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.detail {
+    color: var(--text-secondary);
+    font-size: 0.75em;
+}
+
+.actions button {
+    min-width: 80px;
+    padding: 4px 8px;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.actions button:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--text-accent);
+    transform: translateY(-1px);
+}
+
+.start-btn {
+    color: var(--gauge-green);
+}
+
+.stop-btn {
+    color: var(--gauge-red);
+}
+
+.restart-btn {
+    color: #FFA726;
+}
+
+.actions button:disabled {
+    opacity: 0.5;
+    cursor: default;
+    background-color: var(--bg-secondary);
+    border-color: #555555;
+    color: var(--text-secondary);
+}
+        </style>
+        <script>
+let usageChart, tempChart, memoryGauge, memoryLineChart;
+
+// Consistent colors for GPU and CPU (Dark theme).
+const GPU_COLOR = 'rgb(102, 187, 106)'; // #66BB6A
+const GPU_BG_COLOR = 'rgba(102, 187, 106, 0.1)';
+const CPU_COLOR = 'rgb(33, 150, 243)'; // #2196F3
+const CPU_BG_COLOR = 'rgba(33, 150, 243, 0.1)';
+
+function createGauge(canvasId, label, maxValue) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+
+    return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [0, 80, 10, 5, 5, 128], // Green(80), Gray(10), Orange(5), Red(5), Available, Max
+                backgroundColor: [
+                    '#4CAF50', // Bright saturated green - Primary healthy range
+                    '#424242', // Dark gray - Warning range  
+                    '#FF9800', // Bright orange - Critical range
+                    '#F44336', // Vivid red - Maximum danger range
+                    '#333333', // Dark gray background - Available space
+                    '#333333'  // Dark gray background - Available space (duplicate for chart logic)
+                ],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270,
+                cutout: '60%',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            aspectRatio: 2,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                },
+                annotation: {
+                    annotations: {
+                        usedLabel: {
+                            type: 'doughnutLabel',
+                            content: '0',
+                            font: {
+                                size: 32,
+                                weight: 'bold'
+                            },
+                            color: '#FFFFFF',
+                            yAdjust: 20,
+                            position: {
+                                x: 'center',
+                                y: '80%'
+                            }
+                        },
+                        totalLabel: {
+                            type: 'doughnutLabel',
+                            content: label,
+                            font: {
+                                size: 14
+                            },
+                            color: '#CCCCCC',
+                            yAdjust: 20,
+                            position: {
+                                x: 'center',
+                                y: '0%'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateGauge(chart, value, maxValue) {
+    // Truncate so we get 128GB when it's actually 128.5
+    maxValue = Math.trunc(maxValue);
+    if (value > maxValue) {
+        value = maxValue;
+    }
+
+    // Calculate segments based on usage percentage
+    const usagePercent = (value / maxValue) * 100;
+    const greenMax = 80;    // 0-80% green (healthy)
+    const grayMax = 90;     // 80-90% gray (warning) 
+    const orangeMax = 95;   // 90-95% orange (critical)
+    const redMax = 100;     // 95-100% red (maximum danger)
+
+    // Initialize segments array
+    const segments = [0, 0, 0, 0, 0]; // [green, warning, critical, danger, available]
+    
+    if (usagePercent <= greenMax) {
+        // All usage is in green segment
+        segments[0] = usagePercent;
+        segments[4] = 100 - usagePercent; // Available
+    } else if (usagePercent <= grayMax) {
+        // Usage spans green and warning segments
+        segments[0] = greenMax;
+        segments[1] = usagePercent - greenMax;
+        segments[4] = 100 - usagePercent; // Available
+    } else if (usagePercent <= orangeMax) {
+        // Usage spans green, warning, and critical segments
+        segments[0] = greenMax;
+        segments[1] = grayMax - greenMax;
+        segments[2] = usagePercent - grayMax;
+        segments[4] = 100 - usagePercent; // Available
+    } else {
+        // Usage spans all segments
+        segments[0] = greenMax;
+        segments[1] = grayMax - greenMax;
+        segments[2] = orangeMax - grayMax;
+        segments[3] = usagePercent - orangeMax;
+        segments[4] = 100 - usagePercent; // Available
+    }
+
+    // Update chart data
+    chart.data.datasets[0].data = [...segments, maxValue];
+    
+    // Update labels
+    chart.options.plugins.annotation.annotations.usedLabel.content = `${value.toFixed(1)}GB`;
+    chart.options.plugins.annotation.annotations.totalLabel.content = `/${maxValue}GB`;
+    chart.update('none');
+}
+
+function initCharts() {
+    // Usage line chart
+    const usageCtx = document.getElementById('usage-chart').getContext('2d');
+    usageChart = new Chart(usageCtx, {
+        type: 'line',
+        data: {
+            labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            datasets: [{
+                label: 'GPU %',
+                data: [45, 52, 67, 78, 85, 92, 88, 75, 65, 70],
+                borderColor: GPU_COLOR,
+                backgroundColor: GPU_BG_COLOR,
+                tension: 0.4,
+            }, {
+                label: 'CPU %',
+                data: [25, 35, 45, 55, 62, 58, 52, 48, 42, 38],
+                borderColor: CPU_COLOR,
+                backgroundColor: CPU_BG_COLOR,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Usage %',
+                        color: '#CCCCCC'
+                    },
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                },
+                x: {
+                    display: false,
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#CCCCCC'
+                    }
+                }
+            }
+        }
+    });
+
+    // Temperature line chart (combined GPU and CPU)
+    const tempCtx = document.getElementById('temp-chart').getContext('2d');
+    tempChart = new Chart(tempCtx, {
+        type: 'line',
+        data: {
+            labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            datasets: [{
+                label: 'GPU °C',
+                data: [62, 65, 68, 72, 75, 78, 76, 73, 70, 68],
+                borderColor: GPU_COLOR,
+                backgroundColor: GPU_BG_COLOR,
+                tension: 0.4,
+            }, {
+                label: 'System °C',
+                data: [45, 48, 52, 55, 58, 56, 54, 52, 50, 48],
+                borderColor: CPU_COLOR,
+                backgroundColor: CPU_BG_COLOR,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Temperature °C',
+                        color: '#CCCCCC'
+                    },
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                },
+                x: {
+                    display: false,
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#CCCCCC'
+                    }
+                }
+            }
+        }
+    });
+
+    // Initialize memory gauge
+    memoryGauge = createGauge('memory-gauge', '/128GB', 128);
+    
+    // Demo memory usage - показываем 87GB использования (68% - зеленая зона)
+    updateGauge(memoryGauge, 87, 128);
+
+    const memoryCtx = document.getElementById('memory-chart').getContext('2d');
+    memoryLineChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: {
+            labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            datasets: [{
+                label: 'Memory',
+                data: [65, 68, 72, 75, 78, 82, 85, 87, 85, 87],
+                borderColor: 'rgb(76, 175, 80)', // #4CAF50 - Dark theme green
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 128,
+                    title: {
+                        display: true,
+                        text: 'GB',
+                        color: '#CCCCCC'
+                    },
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                },
+                x: {
+                    display: false,
+                    grid: {
+                        color: '#555555'
+                    },
+                    ticks: {
+                        color: '#CCCCCC'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+});
+</script>
+</body>
+</html>

@@ -34,23 +34,27 @@ const dockerActions = {
 	}
 };
 
-// Consistent colors for GPU and CPU.
-const GPU_COLOR = 'rgb(75, 192, 192)';
-const GPU_BG_COLOR = 'rgba(75, 192, 192, 0.1)';
-const CPU_COLOR = 'rgb(54, 162, 235)';
-const CPU_BG_COLOR = 'rgba(54, 162, 235, 0.1)';
+// Consistent colors for GPU and CPU (Dark theme).
+const GPU_COLOR = 'rgb(102, 187, 106)'; // #66BB6A
+const GPU_BG_COLOR = 'rgba(102, 187, 106, 0.1)';
+const CPU_COLOR = 'rgb(33, 150, 243)'; // #2196F3
+const CPU_BG_COLOR = 'rgba(33, 150, 243, 0.1)';
 
-function createGauge(canvasId, label, maxValue, yellowFrom, redFrom) {
+function createGauge(canvasId, label, maxValue) {
 	const ctx = document.getElementById(canvasId).getContext('2d');
 
 	return new Chart(ctx, {
 		type: 'doughnut',
 		data: {
 			datasets: [{
-				data: [0, maxValue],
+				data: [0, 80, 10, 5, 5, maxValue], // Green(80), Gray(10), Orange(5), Red(5), Available
 				backgroundColor: [
-					'rgb(75, 192, 192)',
-					'rgb(230, 230, 230)'
+					'#4CAF50', // Bright saturated green - Primary healthy range
+					'#424242', // Dark gray - Warning range  
+					'#FF9800', // Bright orange - Critical range
+					'#F44336', // Vivid red - Maximum danger range
+					'#333333', // Dark gray background - Available space
+					'#333333'  // Dark gray background - Available space (duplicate for chart logic)
 				],
 				borderWidth: 0,
 				circumference: 180,
@@ -78,7 +82,7 @@ function createGauge(canvasId, label, maxValue, yellowFrom, redFrom) {
 								size: 32,
 								weight: 'bold'
 							},
-							color: 'black',
+							color: '#FFFFFF',
 							yAdjust: 20,
 							position: {
 								x: 'center',
@@ -91,7 +95,7 @@ function createGauge(canvasId, label, maxValue, yellowFrom, redFrom) {
 							font: {
 								size: 14
 							},
-							color: 'gray',
+							color: '#CCCCCC',
 							yAdjust: 20,
 							position: {
 								x: 'center',
@@ -106,26 +110,51 @@ function createGauge(canvasId, label, maxValue, yellowFrom, redFrom) {
 }
 
 function updateGauge(chart, value, maxValue) {
-	const yellowFrom = maxValue * 0.6;
-	const redFrom = maxValue * 0.8;
-
-	let color;
-	if (value >= redFrom) {
-		color = 'rgb(255, 99, 132)';
-	} else if (value >= yellowFrom) {
-		color = 'rgb(255, 205, 86)';
-	} else {
-		color = 'rgb(75, 192, 192)';
-	}
-
-	// Truncate so we we get 128GB when it's actually 128.5
+	// Truncate so we get 128GB when it's actually 128.5
 	maxValue = Math.trunc(maxValue);
 	if (value > maxValue) {
 		value = maxValue;
 	}
 
-	chart.data.datasets[0].data = [value, maxValue - value];
-	chart.data.datasets[0].backgroundColor = [color, 'rgb(230, 230, 230)'];
+	// Calculate segments based on usage percentage
+	const usagePercent = (value / maxValue) * 100;
+	const greenMax = 80;    // 0-80% green (healthy)
+	const grayMax = 90;     // 80-90% gray (warning) 
+	const orangeMax = 95;   // 90-95% orange (critical)
+	const redMax = 100;     // 95-100% red (maximum danger)
+
+	// Initialize segments array
+	// [0=green healthy, 1=warning, 2=critical, 3=danger, 4=available memory]
+	const segments = [0, 0, 0, 0, 0]; 
+	
+	if (usagePercent <= greenMax) {
+		// All usage is in green segment (0-80%)
+		segments[0] = usagePercent;
+		segments[4] = 100 - usagePercent; // Available memory
+	} else if (usagePercent <= grayMax) {
+		// Usage spans green (0-80%) and warning segments (80-90%)
+		segments[0] = greenMax;
+		segments[1] = usagePercent - greenMax;
+		segments[4] = 100 - usagePercent; // Available memory
+	} else if (usagePercent <= orangeMax) {
+		// Usage spans green, warning (80-90%), and critical segments (90-95%)
+		segments[0] = greenMax;
+		segments[1] = grayMax - greenMax;
+		segments[2] = usagePercent - grayMax;
+		segments[4] = 100 - usagePercent; // Available memory
+	} else {
+		// Usage spans all segments including danger (95-100%)
+		segments[0] = greenMax;
+		segments[1] = grayMax - greenMax;
+		segments[2] = orangeMax - grayMax;
+		segments[3] = usagePercent - orangeMax;
+		segments[4] = 100 - usagePercent; // Available memory
+	}
+
+	// Update chart data
+	chart.data.datasets[0].data = [...segments, maxValue];
+	
+	// Update labels
 	chart.options.plugins.annotation.annotations.usedLabel.content = `${value.toFixed(1)}GB`;
 	chart.options.plugins.annotation.annotations.totalLabel.content = `/${maxValue}GB`;
 	chart.update('none');
@@ -161,16 +190,32 @@ function initCharts() {
 					max: 100,
 					title: {
 						display: true,
-						text: 'Usage %'
+						text: 'Usage %',
+						color: '#CCCCCC'
+					},
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
 					}
 				},
 				x: {
-					display: false
+					display: false,
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
+					}
 				}
 			},
 			plugins: {
 				legend: {
 					position: 'bottom',
+					labels: {
+						color: '#CCCCCC'
+					}
 				}
 			}
 		}
@@ -205,22 +250,38 @@ function initCharts() {
 					max: 100,
 					title: {
 						display: true,
-						text: 'Temperature °C'
+						text: 'Temperature °C',
+						color: '#CCCCCC'
+					},
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
 					}
 				},
 				x: {
-					display: false
+					display: false,
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
+					}
 				}
 			},
 			plugins: {
 				legend: {
-					position: 'bottom'
+					position: 'bottom',
+					labels: {
+						color: '#CCCCCC'
+					}
 				}
 			}
 		}
 	});
 
-	memoryGauge = createGauge('memory-gauge', '/128GB', 100, 60, 80);
+	memoryGauge = createGauge('memory-gauge', '/128GB', 128);
 
 	const memoryCtx = document.getElementById('memory-chart').getContext('2d');
 	memoryLineChart = new Chart(memoryCtx, {
@@ -230,8 +291,8 @@ function initCharts() {
 			datasets: [{
 				label: 'Memory',
 				data: [],
-				borderColor: 'rgb(75, 192, 192)', // Default green color
-				backgroundColor: 'rgba(75, 192, 192, 0.1)',
+				borderColor: 'rgb(76, 175, 80)', // #4CAF50 - Dark theme green
+				backgroundColor: 'rgba(76, 175, 80, 0.1)',
 				tension: 0.4,
 				segment: {
 					borderColor: ctx => {
@@ -244,11 +305,11 @@ function initCharts() {
 						const value = ctx.p1.parsed.y;
 
 						if (value >= redThreshold) {
-							return 'rgb(255, 99, 132)'; // Red
+							return 'rgb(244, 67, 54)'; // #F44336 - Red
 						} else if (value >= yellowThreshold) {
-							return 'rgb(255, 205, 86)'; // Yellow
+							return 'rgb(255, 193, 7)'; // Yellow
 						} else {
-							return 'rgb(75, 192, 192)'; // Green
+							return 'rgb(76, 175, 80)'; // #4CAF50 - Green
 						}
 					}
 				}
@@ -263,11 +324,24 @@ function initCharts() {
 					max: 128,
 					title: {
 						display: true,
-						text: 'GB'
+						text: 'GB',
+						color: '#CCCCCC'
+					},
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
 					}
 				},
 				x: {
-					display: false
+					display: false,
+					grid: {
+						color: '#555555'
+					},
+					ticks: {
+						color: '#CCCCCC'
+					}
 				}
 			},
 			plugins: {
@@ -472,6 +546,12 @@ function connect() {
 
 // Initialize charts when page loads
 document.addEventListener('DOMContentLoaded', () => {
+	// Set hostname in the header
+	const hostnameElement = document.getElementById('hostname');
+	if (hostnameElement) {
+		hostnameElement.textContent = window.location.hostname || 'DGX Spark Dashboard';
+	}
+	
 	initCharts();
 	connect();
 });

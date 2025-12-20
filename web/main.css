@@ -1,5 +1,30 @@
 :root {
 	--progress-bar-height: 1px;
+	
+	/* Dark theme colors */
+	--bg-primary: #121212;
+	--bg-secondary: #1A1A1A;
+	--bg-card: #1E1E1E;
+	--bg-card-hover: #222222;
+	
+	/* Text colors */
+	--text-primary: #FFFFFF;
+	--text-secondary: #CCCCCC;
+	--text-accent: #00BFA5;
+	
+	/* Gauge colors */
+	--gauge-green: #4CAF50;
+	--gauge-gray: #333333;
+	--gauge-red: #F44336;
+	
+	/* Chart colors */
+	--chart-blue: #2196F3;
+	--chart-green: #66BB6A;
+	--chart-grid: #555555;
+	
+	/* Shadows */
+	--shadow-card: 0 2px 4px rgba(0,0,0,0.3);
+	--shadow-card-hover: 0 4px 8px rgba(0,0,0,0.4);
 }
 
 * {
@@ -8,6 +33,8 @@
 
 body {
 	margin: 0;
+	background-color: var(--bg-primary);
+	color: var(--text-primary);
 }
 
 /* Progress bar at top indicating time until next data refresh */
@@ -16,10 +43,11 @@ body {
 	top: 0;
 	right: 0;
 	height: var(--progress-bar-height);
-	background-color: rgb(54, 162, 235);
+	background: linear-gradient(90deg, var(--chart-blue), var(--chart-green));
 	width: 100%;
 	transition: width linear;
 	z-index: 1000;
+	box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
 }
 
 .page {
@@ -32,24 +60,13 @@ body {
 h1 {
 	display: inline-block;
 	margin-bottom: 10px;
+	color: var(--text-primary);
 }
 
 #header {
 	position: relative;
 }
 
-#links {
-	position: absolute;
-	right: 0;
-	bottom: 10px;
-}
-
-#links a {
-	color: #999;
-	display: inline-block;
-	margin: 0 5px;
-	font-size: 0.9em;
-}
 
 .graphs {
 	display: flex;
@@ -58,9 +75,18 @@ h1 {
 }
 
 .group {
-	border: 1px solid #ccc;
+	background: var(--bg-card);
+	border: 1px solid #333333;
 	padding: 10px;
 	border-radius: 8px;
+	box-shadow: var(--shadow-card);
+	transition: all 0.3s ease;
+}
+
+.group:hover {
+	background: var(--bg-card-hover);
+	box-shadow: var(--shadow-card-hover);
+	transform: translateY(-2px);
 }
 
 .group.full {
@@ -71,17 +97,12 @@ h1 {
 	flex-basis: calc(50% - 32px);
 }
 
-.subgraphs {
-	display: flex;
-}
-
-.subgroup.half {
-	flex-basis: 50%;
-}
 
 .group h3 {
 	margin: 0 0 5px;
 	text-align: center;
+	color: var(--text-primary);
+	font-weight: 600;
 }
 
 .chart-container {
@@ -113,16 +134,17 @@ h1 {
 .docker-table td {
 	text-align: left;
 	padding: 8px;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid #333333;
 }
 
 .docker-table th {
-	background-color: #f9f9f9;
-	font-weight: bold;
+	background-color: var(--bg-secondary);
+	color: var(--text-primary);
+	font-weight: 600;
 }
 
 .docker-table tr:hover {
-	background-color: #f0f0f9;
+	background-color: var(--bg-card-hover);
 }
 
 .docker-table tr:last-child td {
@@ -131,69 +153,91 @@ h1 {
 
 .mono {
 	font-family: monospace;
-	color: #555;
+	color: var(--text-secondary);
 }
 
 .status-badge {
 	display: inline-block;
 	padding: 2px 6px;
 	border-radius: 4px;
-	border: 1px solid #b7ebdf;
+	border: 1px solid var(--gauge-green);
 	font-size: 0.85em;
 	font-weight: bold;
 }
 
 .status-running {
-	background-color: #e6fffa;
-	color: #009068;
+	background-color: rgba(76, 175, 80, 0.1);
+	color: var(--gauge-green);
 }
 
 .status-stopped {
-	background-color: #fff5f5;
-	color: #c53030;
-	border-color: #feb2b2;
+	background-color: rgba(244, 67, 54, 0.1);
+	color: var(--gauge-red);
+	border-color: var(--gauge-red);
 }
 
 .name {
 	font-size: 1.1em;
 	font-weight: bold;
+	color: var(--text-primary);
 }
 
 .detail {
-	color: #999;
+	color: var(--text-secondary);
 	font-size: 0.75em;
 }
 
 .actions button {
 	min-width: 80px;
 	padding: 4px 8px;
-	border: 1px solid #ccc;
+	border: 1px solid #444444;
 	border-radius: 4px;
-	background-color: #fff;
+	background-color: var(--bg-card);
+	color: var(--text-primary);
 	cursor: pointer;
 	font-size: 0.9em;
+	transition: all 0.2s ease;
+	position: relative;
+	overflow: hidden;
 }
 
 .actions button:hover {
-	background-color: #f0f0f0;
+	background-color: var(--bg-card-hover);
+	border-color: var(--text-accent);
+	transform: translateY(-1px);
+}
+
+.actions button:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+	transition: left 0.5s;
+}
+
+.actions button:hover:before {
+	left: 100%;
 }
 
 .start-btn {
-	color: #009068;
+	color: var(--gauge-green);
 }
 
 .stop-btn {
-	color: #c53030;
+	color: var(--gauge-red);
 }
 
 .restart-btn {
-	color: #ccaa12;
+	color: #FFA726;
 }
 
 .actions button:disabled {
 	opacity: 0.5;
 	cursor: default;
-	background-color: #f5f5f5;
-	border-color: #ddd;
-	color: #999;
+	background-color: var(--bg-secondary);
+	border-color: #555555;
+	color: var(--text-secondary);
 }
