@@ -241,3 +241,287 @@ h1 {
 	border-color: #555555;
 	color: var(--text-secondary);
 }
+
+/* ========================================
+   RESPONSIVE DESIGN FOR SMALL SCREENS
+   ======================================== */
+
+/* Tablet landscape and smaller desktop */
+@media (max-width: 1200px) {
+	.page {
+		max-width: 1000px;
+	}
+	
+	.chart-container {
+		height: 220px;
+	}
+	
+	.chart-container.small {
+		height: 180px;
+	}
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+	.page {
+		max-width: 100%;
+		margin: 0 10px;
+		margin-top: var(--progress-bar-height);
+	}
+	
+	.graphs {
+		gap: 15px;
+	}
+	
+	.group {
+		padding: 8px;
+	}
+	
+	.group.half {
+		flex-basis: calc(50% - 24px);
+	}
+	
+	.chart-container {
+		height: 180px;
+	}
+	
+	.chart-container.small {
+		height: 150px;
+	}
+	
+	#memory-gauge {
+		max-height: 140px;
+	}
+	
+	h1 {
+		font-size: 1.5em;
+	}
+	
+	.group h3 {
+		font-size: 0.9em;
+	}
+	
+	.power-label {
+		font-size: 14px;
+	}
+	
+	/* Hide less important elements on smaller screens */
+	.docker-table th:nth-child(n+4),
+	.docker-table td:nth-child(n+4) {
+		display: none;
+	}
+}
+
+/* Mobile landscape and small tablets (target: 640px width) */
+@media (max-width: 640px) {
+	.page {
+		margin: 0 5px;
+		margin-top: var(--progress-bar-height);
+	}
+	
+	.graphs {
+		gap: 10px;
+	}
+	
+	.group {
+		padding: 6px;
+	}
+	
+	.group.half {
+		flex-basis: calc(50% - 20px);
+	}
+	
+	.chart-container {
+		height: 150px;
+	}
+	
+	.chart-container.small {
+		height: 120px;
+	}
+	
+	#memory-gauge {
+		max-height: 100px;
+	}
+	
+	h1 {
+		font-size: 1.2em;
+		margin-bottom: 8px;
+	}
+	
+	.group h3 {
+		font-size: 0.8em;
+		margin-bottom: 4px;
+	}
+	
+	.power-label {
+		font-size: 12px;
+		margin-top: 5px;
+	}
+	
+	/* Compact mode - hide less critical elements */
+	.docker-section {
+		display: none !important;
+	}
+	
+	/* Reduce table padding for mobile */
+	.docker-table th,
+	.docker-table td {
+		padding: 4px;
+		font-size: 0.85em;
+	}
+	
+	/* Smaller action buttons */
+	.actions button {
+		min-width: 60px;
+		padding: 3px 6px;
+		font-size: 0.8em;
+	}
+}
+
+/* Very small screens (mobile portrait) */
+@media (max-width: 480px) {
+	.page {
+		margin: 0 2px;
+	}
+	
+	.graphs {
+		gap: 8px;
+	}
+	
+	.group {
+		padding: 4px;
+	}
+	
+	/* Stack elements vertically on very small screens */
+	.group.half {
+		flex-basis: 100%;
+	}
+	
+	.chart-container {
+		height: 120px;
+	}
+	
+	.chart-container.small {
+		height: 100px;
+	}
+	
+	#memory-gauge {
+		max-height: 80px;
+	}
+	
+	h1 {
+		font-size: 1.1em;
+	}
+	
+	.group h3 {
+		font-size: 0.75em;
+	}
+	
+	.power-label {
+		font-size: 11px;
+	}
+	
+	/* Hide even more elements on very small screens */
+	.memory-chart-section {
+		display: none !important;
+	}
+}
+
+/* High DPI displays and performance optimizations */
+@media (max-width: 640px) and (-webkit-min-device-pixel-ratio: 2),
+       (max-width: 640px) and (min-resolution: 192dpi) {
+	/* Reduce chart animations for performance */
+	.group {
+		transition: none;
+	}
+	
+	.group:hover {
+		transform: none;
+	}
+	
+	/* Simplify chart rendering */
+	.chart-container canvas {
+		image-rendering: -webkit-optimize-contrast;
+		image-rendering: optimizeSpeed;
+	}
+}
+
+/* ========================================
+   COMPACT MODE STYLES
+   ======================================== */
+
+body.compact-mode .page {
+	max-width: 100%;
+	margin: 0 5px;
+}
+
+body.compact-mode .graphs {
+	gap: 8px;
+}
+
+body.compact-mode .group {
+	padding: 4px;
+}
+
+body.compact-mode .group.half {
+	flex-basis: calc(50% - 16px);
+}
+
+body.compact-mode .chart-container {
+	height: 120px;
+}
+
+body.compact-mode .chart-container.small {
+	height: 100px;
+}
+
+body.compact-mode #memory-gauge {
+	max-height: 80px;
+}
+
+body.compact-mode h1 {
+	font-size: 1.1em;
+}
+
+body.compact-mode .group h3 {
+	font-size: 0.75em;
+}
+
+body.compact-mode .power-label {
+	font-size: 11px;
+}
+
+body.compact-mode .memory-chart-section {
+	display: none !important;
+}
+
+body.compact-mode .docker-section {
+	display: none !important;
+}
+
+/* Compact mode toggle button */
+#header button {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 5px 10px;
+	background: var(--bg-card);
+	border: 1px solid #444;
+	border-radius: 4px;
+	color: var(--text-primary);
+	cursor: pointer;
+	font-size: 0.8em;
+	transition: all 0.2s ease;
+}
+
+#header button:hover {
+	background-color: var(--bg-card-hover);
+	border-color: var(--text-accent);
+	transform: translateY(-1px);
+}
+
+/* Ensure header positioning works with toggle button */
+#header {
+	position: relative;
+	min-height: 40px;
+}

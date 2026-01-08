@@ -157,6 +157,67 @@ function updateGauge(chart, value, maxValue) {
 }
 
 function initCharts() {
+	// Detect screen size for responsive chart configuration
+	const isSmallScreen = window.innerWidth <= 640;
+	const isVerySmallScreen = window.innerWidth <= 480;
+	
+	// Responsive chart options
+	const chartOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		interaction: {
+			intersect: false,
+			mode: 'index'
+		},
+		plugins: {
+			legend: {
+				position: isSmallScreen ? 'top' : 'bottom',
+				labels: {
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 10 : 12
+					},
+					padding: isSmallScreen ? 10 : 20
+				}
+			}
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				max: 100,
+				title: {
+					display: true,
+					text: 'Usage %',
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 10 : 12
+					}
+				},
+				grid: {
+					color: '#555555'
+				},
+				ticks: {
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 9 : 11
+					}
+				}
+			},
+			x: {
+				display: false,
+				grid: {
+					color: '#555555'
+				},
+				ticks: {
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 9 : 11
+					}
+				}
+			}
+		}
+	};
+	
 	// Usage line chart
 	const usageCtx = document.getElementById('usage-chart').getContext('2d');
 	usageChart = new Chart(usageCtx, {
@@ -168,57 +229,42 @@ function initCharts() {
 				data: [],
 				borderColor: GPU_COLOR,
 				backgroundColor: GPU_BG_COLOR,
-				tension: 0.4,
+				tension: isSmallScreen ? 0.2 : 0.4, // Less smoothing on small screens
+				borderWidth: isSmallScreen ? 1 : 2,
 			}, {
 				label: 'CPU %',
 				data: [],
 				borderColor: CPU_COLOR,
 				backgroundColor: CPU_BG_COLOR,
-				tension: 0.4,
+				tension: isSmallScreen ? 0.2 : 0.4,
+				borderWidth: isSmallScreen ? 1 : 2,
 			}]
 		},
-		options: {
-			responsive: true,
-			maintainAspectRatio: false,
-			scales: {
-				y: {
-					beginAtZero: true,
-					max: 100,
-					title: {
-						display: true,
-						text: 'Usage %',
-						color: '#CCCCCC'
-					},
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				},
-				x: {
-					display: false,
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				}
-			},
-			plugins: {
-				legend: {
-					position: 'bottom',
-					labels: {
-						color: '#CCCCCC'
-					}
-				}
-			}
-		}
+		options: chartOptions
 	});
 
 	// Temperature line chart (combined GPU and CPU)
 	const tempCtx = document.getElementById('temp-chart').getContext('2d');
+	
+	// Temperature-specific options
+	const tempChartOptions = {
+		...chartOptions,
+		scales: {
+			...chartOptions.scales,
+			y: {
+				...chartOptions.scales.y,
+				title: {
+					display: true,
+					text: 'Temperature °C',
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 10 : 12
+					}
+				}
+			}
+		}
+	};
+	
 	tempChart = new Chart(tempCtx, {
 		type: 'line',
 		data: {
@@ -228,58 +274,116 @@ function initCharts() {
 				data: [],
 				borderColor: GPU_COLOR,
 				backgroundColor: GPU_BG_COLOR,
-				tension: 0.4,
+				tension: isSmallScreen ? 0.2 : 0.4,
+				borderWidth: isSmallScreen ? 1 : 2,
 			}, {
 				label: 'System °C',
 				data: [],
 				borderColor: CPU_COLOR,
 				backgroundColor: CPU_BG_COLOR,
-				tension: 0.4,
+				tension: isSmallScreen ? 0.2 : 0.4,
+				borderWidth: isSmallScreen ? 1 : 2,
 			}]
 		},
-		options: {
-			responsive: true,
-			maintainAspectRatio: false,
-			scales: {
-				y: {
-					beginAtZero: true,
-					max: 100,
-					title: {
-						display: true,
-						text: 'Temperature °C',
-						color: '#CCCCCC'
-					},
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				},
-				x: {
-					display: false,
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				}
+		options: tempChartOptions
+	});
+
+	// Memory gauge with responsive configuration
+	const gaugeOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		aspectRatio: isSmallScreen ? 1.5 : 2,
+		plugins: {
+			legend: {
+				display: false
 			},
-			plugins: {
-				legend: {
-					position: 'bottom',
-					labels: {
-						color: '#CCCCCC'
+			tooltip: {
+				enabled: false
+			},
+			annotation: {
+				annotations: {
+					usedLabel: {
+						type: 'doughnutLabel',
+						content: '0',
+						font: {
+							size: isSmallScreen ? 20 : 32,
+							weight: 'bold'
+						},
+						color: '#FFFFFF',
+						yAdjust: 20,
+						position: {
+							x: 'center',
+							y: '80%'
+						}
+					},
+					totalLabel: {
+						type: 'doughnutLabel',
+						content: '/128GB',
+						font: {
+							size: isSmallScreen ? 10 : 14
+						},
+						color: '#CCCCCC',
+						yAdjust: 20,
+						position: {
+							x: 'center',
+							y: '0%'
+						},
 					}
 				}
 			}
 		}
-	});
-
+	};
+	
 	memoryGauge = createGauge('memory-gauge', '/128GB', 128);
 
 	const memoryCtx = document.getElementById('memory-chart').getContext('2d');
+	
+	// Memory chart options
+	const memoryChartOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		scales: {
+			y: {
+				beginAtZero: true,
+				max: 128,
+				title: {
+					display: true,
+					text: 'GB',
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 10 : 12
+					}
+				},
+				grid: {
+					color: '#555555'
+				},
+				ticks: {
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 9 : 11
+					}
+				}
+			},
+			x: {
+				display: false,
+				grid: {
+					color: '#555555'
+				},
+				ticks: {
+					color: '#CCCCCC',
+					font: {
+						size: isSmallScreen ? 9 : 11
+					}
+				}
+			}
+		},
+		plugins: {
+			legend: {
+				display: false
+			}
+		}
+	};
+	
 	memoryLineChart = new Chart(memoryCtx, {
 		type: 'line',
 		data: {
@@ -289,7 +393,8 @@ function initCharts() {
 				data: [],
 				borderColor: 'rgb(76, 175, 80)', // #4CAF50 - Dark theme green
 				backgroundColor: 'rgba(76, 175, 80, 0.1)',
-				tension: 0.4,
+				tension: isSmallScreen ? 0.2 : 0.4,
+				borderWidth: isSmallScreen ? 1 : 2,
 				segment: {
 					borderColor: ctx => {
 						// Get the max value from the y-axis scale (usually 128GB)
@@ -315,41 +420,7 @@ function initCharts() {
 				}
 			}]
 		},
-		options: {
-			responsive: true,
-			maintainAspectRatio: false,
-			scales: {
-				y: {
-					beginAtZero: true,
-					max: 128,
-					title: {
-						display: true,
-						text: 'GB',
-						color: '#CCCCCC'
-					},
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				},
-				x: {
-					display: false,
-					grid: {
-						color: '#555555'
-					},
-					ticks: {
-						color: '#CCCCCC'
-					}
-				}
-			},
-			plugins: {
-				legend: {
-					display: false
-				}
-			}
-		}
+		options: memoryChartOptions
 	});
 }
 
@@ -544,6 +615,65 @@ function connect() {
 	};
 }
 
+// Mode management for responsive design
+let isCompactMode = false;
+
+function toggleCompactMode() {
+	isCompactMode = !isCompactMode;
+	const body = document.body;
+	const memoryChartSection = document.querySelector('.memory-chart-section');
+	const dockerSection = document.getElementById('docker-section');
+	
+	if (isCompactMode) {
+		// Enable compact mode - hide less critical elements
+		body.classList.add('compact-mode');
+		if (memoryChartSection) memoryChartSection.style.display = 'none';
+		if (dockerSection) dockerSection.style.display = 'none';
+	} else {
+		// Disable compact mode - show all elements
+		body.classList.remove('compact-mode');
+		if (memoryChartSection) memoryChartSection.style.display = 'block';
+		if (dockerSection) dockerSection.style.display = 'block';
+	}
+	
+	// Update charts after mode change
+	setTimeout(() => {
+		if (usageChart) usageChart.resize();
+		if (tempChart) tempChart.resize();
+		if (memoryLineChart) memoryLineChart.resize();
+		if (memoryGauge) memoryGauge.resize();
+	}, 100);
+}
+
+// Auto-detect small screens and enable compact mode
+function detectScreenSize() {
+	const isSmallScreen = window.innerWidth <= 640;
+	const isVerySmallScreen = window.innerWidth <= 480;
+	
+	if (isVerySmallScreen && !isCompactMode) {
+		// Automatically enable compact mode on very small screens
+		toggleCompactMode();
+	} else if (!isVerySmallScreen && isCompactMode) {
+		// Disable compact mode on larger screens
+		toggleCompactMode();
+	}
+}
+
+// Handle window resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+	clearTimeout(resizeTimeout);
+	resizeTimeout = setTimeout(() => {
+		detectScreenSize();
+		
+		// Resize charts to fit new container sizes
+		if (usageChart) usageChart.resize();
+		if (tempChart) tempChart.resize();
+		if (memoryLineChart) memoryLineChart.resize();
+		if (memoryGauge) memoryGauge.resize();
+	}, 250);
+});
+
 // Initialize charts when page loads
 document.addEventListener('DOMContentLoaded', () => {
 	// Set hostname in the header
@@ -552,6 +682,39 @@ document.addEventListener('DOMContentLoaded', () => {
 		hostnameElement.textContent = window.location.hostname || 'DGX Spark Dashboard';
 	}
 	
+	// Add compact mode toggle button to header
+	const header = document.getElementById('header');
+	if (header) {
+		const toggleButton = document.createElement('button');
+		toggleButton.textContent = '📱 Compact';
+		toggleButton.style.cssText = `
+			position: absolute;
+			right: 0;
+			top: 0;
+			padding: 5px 10px;
+			background: var(--bg-card);
+			border: 1px solid #444;
+			border-radius: 4px;
+			color: var(--text-primary);
+			cursor: pointer;
+			font-size: 0.8em;
+			transition: all 0.2s ease;
+		`;
+		toggleButton.onmouseover = () => {
+			toggleButton.style.backgroundColor = 'var(--bg-card-hover)';
+			toggleButton.style.borderColor = 'var(--text-accent)';
+		};
+		toggleButton.onmouseout = () => {
+			toggleButton.style.backgroundColor = 'var(--bg-card)';
+			toggleButton.style.borderColor = '#444';
+		};
+		toggleButton.onclick = toggleCompactMode;
+		header.appendChild(toggleButton);
+	}
+	
 	initCharts();
 	connect();
+	
+	// Initial screen size detection
+	setTimeout(detectScreenSize, 100);
 });
